@@ -10,6 +10,9 @@ import Customer from "./src/Customer";
 import AddCustomer from "./src/AddCustomer";
 import { MenuProvider } from "react-native-popup-menu";
 import UpdateService from "./src/EditService";
+import Transaction from "./src/Transaction";
+import TransactionDetails from "./src/TransactionDetail";
+import Logout from "./src/Logout";
 
 const Stack = createStackNavigator();
 
@@ -29,7 +32,11 @@ const HomeScreen = () => {
 
 
       <Stack.Screen name="Home" component={Home}
-        options={{ title: 'Home' }} />
+        options={{
+          title: 'Home', headerLeft: () => {
+            return (null)
+          }
+        }} />
 
       <Stack.Screen name="AddService" component={AddService}
         options={{ title: 'Add Service' }} />
@@ -48,20 +55,47 @@ const HomeScreen = () => {
 const CustomerScreen = () => {
   return (
     <Stack.Navigator initialRouteName="Customer" screenOptions={{ headerShown: true }}   >
-      <Stack.Screen name="Customer" component={Customer} />
+      <Stack.Screen name="Customer" component={Customer} options={{headerLeft: () => {
+            return (null)
+          }}} />
       <Stack.Screen name="AddCustomer" component={AddCustomer} />
     </Stack.Navigator>
   )
 }
 
+const TransactionScreen = () => {
+  return (
+    <Stack.Navigator initialRouteName="Transaction" screenOptions={{ headerShown: true }}>
+      <Stack.Screen name="Transaction" component={Transaction} options={{headerLeft: () => {
+            return (null)
+          }}} />
+      <Stack.Screen name="Transaction Details" component={TransactionDetails} />
+    </Stack.Navigator>
+  )
+}
+
+const SettingScreen = () => {
+  return (
+    <Stack.Navigator initialRouteName="Logout" screenOptions={{ headerShown: true }}>
+      <Stack.Screen name="Setting" component={Logout} options={{ headerLeft: () => { return null } }} />
+    </Stack.Navigator>
+  )
+}
 const Tab = createMaterialBottomTabNavigator();
 const TabNavigator = () => {
   return (
     <Tab.Navigator initialRouteName="Home" labeled={false} inactiveColor={"greyDark"} >
-      <Tab.Screen name="Home" component={HomeScreen}
+      <Tab.Screen name="HomeScreen" component={HomeScreen}
         options={{ tabBarIcon: 'home' }} />
-      <Tab.Screen name="Customer" component={CustomerScreen}
+
+      <Tab.Screen name="CustomerScreen" component={CustomerScreen}
         options={{ tabBarIcon: 'account-multiple' }} />
+
+      <Tab.Screen name="TransactionScreen" component={TransactionScreen}
+        options={{ tabBarIcon: 'bank-transfer' }} />
+
+      <Tab.Screen name="SettingScreen" component={SettingScreen}
+        options={{ tabBarIcon: 'cog' }} />
     </Tab.Navigator>
   )
 }
