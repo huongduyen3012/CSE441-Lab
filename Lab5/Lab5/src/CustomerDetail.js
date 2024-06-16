@@ -4,36 +4,53 @@ import { View, Text, StyleSheet, Modal, TouchableOpacity, Alert } from "react-na
 import { useState, useEffect } from "react";
 import { IconButton } from "react-native-paper";
 import { useLayoutEffect } from "react";
+import { FlatList } from "react-native";
 import { Menu, MenuTrigger, MenuOption, MenuOptions } from "react-native-popup-menu";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const ServiceDetails = ({ navigation, route }) => {
+const CustomerDetails = ({ navigation, route }) => {
     const { id } = route.params;
     const [data, setData] = useState('');
-    const [name, setName] = useState('');
+    const [transaction, setTransaction] = useState([]);
     const [isDeleting, setIsDeleting] = useState(false);
     const [showModal, setShowModal] = useState(false);
+    const [token, setToken] = useState('');
 
     useEffect(() => {
-        axios.get(`https://kami-backend-5rs0.onrender.com/services/${id}`)
-            .then(response => {
-                setData(response.data);
-                setName(response.data.user.name)
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            })
-    }, [])
+        const fetchData = async () => {
+            try {
+              const response = await axios.get(`https://kami-backend-5rs0.onrender.com/Customers/${id}`);
+              setData(response.data);
+              setTransaction(response.data.transactions);
+            } catch (error) {
+              console.error('Error fetching data:', error);
+            } finally {
+              setIsDeleting(false);
+            }
+          };
+
+        const fetchToken = async () => {
+            try {
+                const storedToken = await AsyncStorage.getItem('userData');
+                setToken(storedToken);
+            } catch (error) {
+                console.error('Error fetching token:', error);
+            }
+        };
+        
+        fetchData();
+        fetchToken();
+    }, []);
+
 
     const navigateToUpdateService = async () => {
-        console.log(data);
         try {
-            navigation.navigate('EditService', {
-                serviceData: {
-                    id: id,
+            navigation.navigate('Edit Customer', {
+                customerData: {
+                    id: id, 
                     name: data.name,
-                    price: data.price
-                }
+                    phone: data.phone,
+                  }
             });
         } catch (error) {
             console.error('Error fetching token:', error);
@@ -43,7 +60,9 @@ const ServiceDetails = ({ navigation, route }) => {
     const deleteFile = async () => {
         setIsDeleting(true);
         try {
-            const response = await axios.delete(`https://kami-backend-5rs0.onrender.com/services/${id}`);
+            const response = await axios.delete(`https://kami-backend-5rs0.onrender.com/Customers/${id}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
             console.log('DELETE Response:', response.data);
             Alert.alert("Success", "Service deleted successfully!");
             navigation.goBack();
@@ -67,6 +86,7 @@ const ServiceDetails = ({ navigation, route }) => {
 
                         <MenuOption onSelect={() => navigateToUpdateService()} text="Edit">
                         </MenuOption>
+
                         <MenuOption onSelect={() => setShowModal(true)} text="Delete">
                         </MenuOption>
 
@@ -78,11 +98,61 @@ const ServiceDetails = ({ navigation, route }) => {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.text}>Service name: {data.name}</Text>
-            <Text style={styles.text}>Price: {data.price}</Text>
-            <Text style={styles.text}>Creator: {name}</Text>
-            <Text style={styles.text}>Time: {data.createdAt}</Text>
-            <Text style={styles.text}>Final update: {data.updatedAt}</Text>
+            <View style={styles.subView}>
+                <Text style={styles.title}>General Information</Text>
+
+                <View style={styles.row}>
+                    <Text style={styles.label}>Customer name: </Text>
+                    <Text style={styles.text}>{data.name}</Text>
+                </View>
+
+                <View style={styles.row}>
+                    <Text style={styles.label}>Phone: </Text>
+                    <Text style={styles.text}>{data.phone}</Text>
+                </View>
+
+                <View style={styles.row}>
+                    <Text style={styles.label}>Total spent: </Text>
+                    <Text style={[styles.text, { color: '#CC313D', fontWeight: 'bold' }]}>{data.totalSpent}đ</Text>
+                </View>
+
+                <View style={styles.row}>
+                    <Text style={styles.label}>Time: </Text>
+                    <Text>{data.createdAt}</Text>
+                </View>
+
+                <View style={styles.row}>
+                    <Text style={styles.label}>Last update: </Text>
+                    <Text>{data.updatedAt}</Text>
+                </View>
+            </View>
+
+            <View style={styles.subView} >
+                <Text style={styles.title}>Transaction History</Text>
+                <View >
+                    <FlatList data={transaction}
+                        keyExtractor={(item) => item._id}
+                        renderItem={({ item }) => (
+                            <View style={styles.viewFlatlist}>
+                                <Text style={{ fontWeight: 'bold', color: 'black' }}>{item.id} - {item.createdAt}</Text>
+                                <FlatList
+                                    data={item.services}
+                                    keyExtractor={(item) => item._id}
+                                    renderItem={({ item }) => {
+                                        const serviceName = item.name;
+                                        return (
+                                            <View>
+                                                <Text>- {serviceName}</Text>
+                                            </View>
+                                        )
+                                    }}
+                                />
+                            </View>
+                        )}>
+                    </FlatList>
+                </View>
+
+            </View>
 
 
             <Modal
@@ -115,23 +185,44 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         padding: 10,
-        backgroundColor: '#FFD5C3',
+        backgroundColor: '#f0f0f0',
     },
 
+    label: {
+        color: 'black',
+        fontSize: 17,
+        fontWeight: 'bold',
+    },
     text: {
         color: 'black',
         fontSize: 17,
     },
-
-    ellipsisButton: {
-        padding: 10,
-        borderRadius: 5,
-    },
-    ellipsisText: {
-        fontSize: 20,
-        fontWeight: "bold",
+    subView: {
+        margin: 5,
+        padding: 5,
+        backgroundColor: 'white',
+        borderRadius: 10,
     },
 
+    row: {
+        flexDirection: 'row',
+        justifyContent: 'flex-start',
+    },
+
+    title: {
+        color: '#CC313D',
+        fontSize: 17,
+        fontWeight: 'bold',
+        marginBottom: 10,
+    },
+
+    viewFlatlist: {
+        margin: 5,
+        padding: 5,
+        borderRadius: 10,
+        borderColor: 'grey',
+        borderWidth: 1,
+    },
     // Menu Options
     menuOptions: {
         optionsContainer: {
@@ -190,4 +281,4 @@ const styles = StyleSheet.create({
 
 
 })
-export default ServiceDetails;
+export default CustomerDetails;

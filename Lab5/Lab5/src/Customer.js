@@ -5,9 +5,9 @@ import { StyleSheet, View, Text, FlatList, TouchableHighlight } from "react-nati
 import { IconButton, Icon } from "react-native-paper";
 const keyExtractor = ({ id }) => id;
 
-const LoadData = ({ data }) => {
+const LoadData = ({ data, onPress }) => {
     return (
-        <TouchableHighlight>
+        <TouchableHighlight onPress={onPress} underlayColor="#f0f0f0">
             <View style={style.viewData}>
                 <View style={{flex:4}}>
                     <Text style={style.serviceName}>Customer: {data.name}</Text>
@@ -64,6 +64,9 @@ const Customer = ({ navigation }) => {
                         renderItem={({ item }) => (
                             <LoadData
                                 data={item}
+                                onPress={() => {
+                                    navigation.navigate('Customer Details', { id: item._id })
+                                }}
                             />
                         )} />
                 </View>
